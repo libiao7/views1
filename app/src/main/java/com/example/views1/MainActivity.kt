@@ -76,9 +76,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initPlayer() {
+//        val hardwareFirstSelector =
+//            MediaCodecSelector { mimeType, requiresSecure, requiresTunneling ->
+//                // 获取系统支持的所有解码器列表
+//                val decoderInfos =
+//                    MediaCodecUtil.getDecoderInfos(mimeType, requiresSecure, requiresTunneling)
+//
+//                if (decoderInfos.isEmpty()) {
+//                    return@MediaCodecSelector emptyList<MediaCodecInfo>()
+//                }
+//
+//                // 真正的排序逻辑：
+//                // hardwareAccelerated 为 true 的排前面，softwareOnly 为 true 的排后面
+//                decoderInfos.sortedWith(compareBy { it.hardwareAccelerated.not() })
+//            }
         player = ExoPlayer.Builder(
             this,
-            DefaultRenderersFactory(this).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+            DefaultRenderersFactory(this)//.setMediaCodecSelector(hardwareFirstSelector)
+                .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
         ).setLoadControl(
             DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
@@ -90,6 +105,32 @@ class MainActivity : AppCompatActivity() {
                 .setBackBuffer(128000, true) // 核心代码：保留过去 多少毫秒的数据在内存中，不立即丢弃
                 .build()
         ).build()
+        // 添加错误监听
+        player.addListener(object : Player.Listener {
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                // 1. 获取最详细的错误追踪文本
+//                val fullDescription =
+//                    org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(error)
+                // 如果没有上面的库，可以用系统自带的：
+                val fullDescription = android.util.Log.getStackTraceString(error)
+
+                // 2. 复制到剪切板
+                val clipboard =
+                    getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val clip = android.content.ClipData.newPlainText("Player Error", fullDescription)
+                clipboard.setPrimaryClip(clip)
+
+                // 3. 弹窗提示用户
+                android.widget.Toast.makeText(
+                    this@MainActivity,
+                    "错误已复制到剪切板，请直接粘贴查看",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+
+                // 4. 在控制台打印，方便调试
+                android.util.Log.e("PlayerError", "详细错误内容: $fullDescription")
+            }
+        })
         playerView.player = player
         playerView.subtitleView?.setStyle(
             CaptionStyleCompat(

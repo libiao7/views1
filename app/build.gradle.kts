@@ -15,7 +15,7 @@ android {
         minSdk = 36
         targetSdk = 36
         versionCode = 1
-        versionName = "2026.3.12"
+        versionName = "2026.3.12-justplayer_aar"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -47,5 +47,5 @@ dependencies {
 
     implementation("androidx.media3:media3-exoplayer:1.9.2")
     implementation("androidx.media3:media3-ui:1.9.2")
-    implementation(files("libs/lib-decoder-ffmpeg-release.aar"))
+    implementation(files("libs/lib-decoder-ffmpeg-release-justplayer.aar"))
 }
